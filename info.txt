@@ -1,0 +1,5 @@
+create virtual env venv
+activate
+install from requirements.txt
+create pdf_files folder
+create .env with SECRET_KEY = YOUR_SECRET_KEY
