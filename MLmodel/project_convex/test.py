@@ -1,16 +1,15 @@
 import requests
 
-# URL of the server where you are sending the POST request
-url = 'http://127.0.0.1:5000/query'
+# URL of the stream route
+url = 'http://127.0.0.1:5000/stream'  # Adjust this to match your Flask app URL if needed
 
-# JSON data to be sent in the request
-data = {
-    "query": "what is the benefit of this idea"
-}
+# Make a GET request to the Flask stream route
+response = requests.get(url, stream=True)
 
-# Send POST request with JSON data
-response = requests.post(url, json=data)
-
-# Print the response from the server
-print(response.status_code)  # HTTP status code
-print(response.json())       # JSON response from the server (if any)
+# Process the streamed response in chunks
+if response.status_code == 200:
+    for chunk in response.iter_content(chunk_size=1024):
+        if chunk:  # Filter out keep-alive new lines
+            print(chunk.decode('utf-8'), end='')
+else:
+    print(f"Error: {response.status_code}")

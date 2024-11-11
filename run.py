@@ -3,10 +3,11 @@ import os
 import secrets
 from datetime import datetime
 
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, Response, stream_with_context
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, login_user, UserMixin, login_required, current_user, logout_user
 from flask_cors import CORS
+import time
 
 from MLmodel.project_convex.model import predict
 
@@ -44,6 +45,16 @@ pdf_db = {
 @login_manager.user_loader
 def load_user(use_id):
     return database.get(int(use_id))
+
+
+def generator_function():
+    for i in range(1,11):
+        yield 'Chunk{} '.format(i)
+        time.sleep(1)
+
+@app.route('/stream')
+def stream():
+    return Response(stream_with_context(generator_function()), content_type='text/plain')
 
 
 @app.route('/question', methods=['POST'])
@@ -105,10 +116,10 @@ def login():
                     login_user(database[i])
                     return jsonify({"message": "Login successful"})
                 else:
-                    return jsonify("error : Invalid Password")
+                    return jsonify({"error": "Invalid Password"})
 
             if i==user_id:
-                return jsonify("error : Email is not registered")
+                return jsonify({"error" : "Email is not registered"})
 
     else:
         return jsonify({"error": "Request must be JSON"}), 400
@@ -184,7 +195,7 @@ def get_pdf(file_id):
         name = pdf_db[file_id]['pdf_name']
         path = os.path.join(app.root_path, 'pdf_files', name)
 
-        return send_file(path_or_file=path,as_attachment=False,
+        return send_file(path_or_file=path,as_attachment=True,
                          download_name= str(name),mimetype='application/pdf')
 
     return jsonify({"error" : 'file not found'})
